@@ -44,4 +44,11 @@ AccessFu uses PointerAdapter.jsm to capture touch gesture which overrides the in
 [9] https://dxr.mozilla.org/mozilla-central/source/accessible/jsat/OutputGenerator.jsm#304<br/>
 [10] https://dxr.mozilla.org/mozilla-central/source/accessible/jsat/AccessFu.jsm#128<br/>
 
+###Screen Reader Architecture
+  There are two sides of screen reader, the parent side and the child side. The parent side captures the actions of keyinput, gesture or the tap change and send these as pivot movement commands to content process. Content process will accesses the accessibility tree to decide the position of pivot and send it back to b2g process for rendering of highlight box and speaking.<br/>
+  When enabling the screen reader, AccessFu.jsm will observes the frame-opend event[1], and injects the content-script.js to the opened frame and the content-script.js will then imports ContentControl.jsm and EventManager.jsm.<br/>
+  The following is the flow when user do a gesture action on screen :
+###Accessibility
+###Speech Synthesis
+
 ##Relative Bugs
