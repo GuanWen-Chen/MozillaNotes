@@ -23,7 +23,7 @@ The following is the flow when an user action occur, this action can be input li
   Most of user actions like gesture and frame load will start from AccessFu.jsm. It will send the action message to the target browser element. And ContentControl.jsm will access the accessibility tree via nsAccessiblePivot which will send an AccEvent for pivot updating to EventManager.jsm. At last EventManager.jsm will wrap the update information and send it back to AccessFu.jsm for TTS and highlightbox updating.<br>
 ###Out-of-Process movement
   When cursor move across browser element, it will connect with the other browser element with frame message manager. ContentControl.jsm will manager this part. The following figure demostrate the flow:<br>
- <br>
+  ![Code flow2](./img/codeFlow2.png)<br>
   When ContentControl.jsm first receive action message from its parent Browser element, it will check if the current accessible element its pivot points to embeds another Browser element, if so pass it recursively to the deepest child. Then check the accessiblility tree like previous mentioned if it is moveable. If it is moveable, still, check if the pointing element a Browser element, if so do the check we previously did. if it is not movable, pass it back to the parent and check it is moveable like previous check, if it can move clear the previous cursor.
 
 ###Core Modules and Components
