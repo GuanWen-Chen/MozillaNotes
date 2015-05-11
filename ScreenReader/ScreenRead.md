@@ -16,12 +16,15 @@ Open "Settings" >> choose "Developers" >> check "Show screen reader settings" un
 Back to "Settings" mune >> choose "Accessibility" >> Open "Screen Reader"
 
 ##Screen Reader Architecture
-  There are two parts of screen reader, the first part is AccessFu.jsm which is imported by shell.html. It will load content-script.js into the browser elements when are opened. In the other hands, it is also in charge of handling the guesture, drawing highlight box and trigger the TTS(text-to-speech) engine. The other part is for the browser element which contains content-script.js, ContentControl.jsm and EventManager.jsm, the detail of these file will be mentioned after. Every browser element has an accessibility tree and an accessible pivot, the tree is a subtree of a DOM tree and the pivot will traverse in the tree to indicate the current focused element in screen reader.<br>
-
+  There are two parts of screen reader, the first part is AccessFu.jsm which is imported by shell.html. It will listen to mozBroser-opened message and load content-script.js into the browser elements when are opened. In the other hands, it is also in charge of handling the guesture, drawing highlight box and trigger the TTS(text-to-speech) engine. The other part is for the browser element which contains content-script.js, ContentControl.jsm and EventManager.jsm, the detail of these file will be mentioned after. Every browser element has an accessibility tree and an accessible pivot, the tree is a subtree of a DOM tree and the pivot will traverse in the tree to indicate the current focused element in screen reader.<br>
+###Move the cursor
 The following is the flow when an user action occur, this action can be input like gesture, mouse scroll, key event:<br/><br/>
   ![Code flow](./img/codeFlow.png)<br/>
-  Most of user actions like gesture and frame load will start from AccessFu.jsm. It will send the action message to the browser element it originally attach to. And ContentControl.jsm will deside which browser element to really move the pivot the flow is in the figure beneath:<br>
-ContentControl.jsm will then get the nsIAccessiblePivot via Utils.jsm and trigger it to update its position and fire an AccEvent. EventManager.jsm takes the AccEvent and other user actions that will change the visial position of visual cursor but not target element of nsIAccessiblePivot(e.g, scroll, whell, resize) then packs it via Presentation.jsm in arrow 4 and notifies the parent side to update the visual cursor and read the content like arrow 5 does.<br>
+  Most of user actions like gesture and frame load will start from AccessFu.jsm. It will send the action message to the target browser element. And ContentControl.jsm will access the accessibility tree via nsAccessiblePivot which will send an AccEvent for pivot updating to EventManager.jsm. At last EventManager.jsm will wrap the update information and send it back to AccessFu.jsm for TTS and highlightbox updating.<br>
+###Out-of-Process movement
+  When cursor move across browser element, it will connect with the other browser element with frame message manager. ContentControl.jsm will manager this part. The following figure demostrate the flow:<br>
+ <br>
+  When ContentControl.jsm first receive action message from its parent Browser element, it will check if the current accessible element its pivot points to embeds another Browser element, if so pass it recursively to the deepest child. Then check the accessiblility tree like previous mentioned if it is moveable. If it is moveable, still, check if the pointing element a Browser element, if so do the check we previously did. if it is not movable, pass it back to the parent and check it is moveable like previous check, if it can move clear the previous cursor.
 
 ###Core Modules and Components
 ####AccessFu.jsm
