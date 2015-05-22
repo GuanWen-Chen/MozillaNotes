@@ -9,16 +9,16 @@
 ##Introduction
 ###What is screen reader
 **Web Accessibility Initiative-Accessible Reich Internet Application(WAI-ARIA)** is a w3c recommendation that can gain 
-the accessibility to the disabilities. Screen reader is a text-to-voice software accessibility tool for mozilla.<br/><br/>
-Screen reader is a feature of accessibility system. After enabling it, a pointer, called visual cursor, will show on the screen which indicates the current element system points to. User can then use some inputs like gesture or keyboard to control the viusal cursor traverses through the elements on the screen and the system will read the content of the element where the visual cursor point to.
-With this system visual disable people can traverse the element on the screen without knowing element's relative position.
+the accessibility to the disabilities. Screen reader is a text-to-voice software accessibility tool for mozilla. It is a feature of accessibility system. After enabling it, a pointer, called visual cursor, will show on the screen which indicates the current element system points to. User can then use some inputs like gesture or keyboard to control the visual cursor traverses through the elements on the screen and the system will read the content of the element where the visual cursor point to.
+With this system, visual disable people can traverse elements in the screen without knowing element's relative position.
 ###How to enable screen reader on B2G?
 
-Open "Settings" >> choose "Developers" >> check "Show screen reader settings" under "debug"<br/>
+Open "Settings" >> choose "Developers" >> check "Show screen reader settings" under "debug"<br>
 Back to "Settings" mune >> choose "Accessibility" >> Open "Screen Reader"
 
 ##Screen Reader Architecture
-  There are two parts of screen reader, the first part is AccessFu.jsm which is imported by shell.html. It will listen to mozBroser-opened message and load content-script.js into the browser elements when they are opened. In the other hands, it is also in charge of handling the guesture and parts of keyboard input, drawing visual cursor and trigger the TTS(text-to-speech) engine. The other part is for the browser element which contains content-script.js, ContentControl.jsm and EventManager.jsm, the detail of these file will be mentioned in later paragraph. Every browser elements has an accessibility tree and an accessible pivot, the tree is a subtree of a DOM tree and the pivot will traverse in the tree to indicate the current focused element in screen reader.<br>
+  There are two parts of screen reader, the first part is AccessFu.jsm which is imported by shell.html, it is the controller part of screen reader system. It will listen to mozBroser-opened message and load content-script.js into the browser elements when they are opened. Also it listen to guestures and parts of keyboard input then pass the action command to target element. In the other hand, it deal with the output after the element moved like drawing visual cursor and trigger the TTS(text-to-speech) engine.<br>
+  The other part is the browser contoller part, it contains modules like content-script.js, ContentControl.jsm and EventManager.jsm. Moreover, every browser element has an accessibility tree, it is a subtree of DOM tree. Also there is an pivot with nsIAccessiblePivot to indicate the currently focused element in accessibility tree. The main task of browser controller part is to manage the element traverse in accessibility tree.
 
 ###Move the visual cursor
 There are two main steps to move the visual cursor. When receiving an action command, a browser element will traverse its own elements (intra-browser) or pass the movement action to other browser elements (inter-browse).<br>
@@ -28,7 +28,7 @@ The following is the flow of screen reader execute an action command:
   When browser receives an action command, it will check if the current pointing element is a browser element, if so, passes the comment to it via frame message manager so the screan reader can reach elements across browser elements.
   After the browser element checking, the browser element will try to move visual cursor inside itself; If it do can move, the browser element will move the visual cursor and do the browser element mentioned above again, if not, it will pass the command back to its parent to seek the oppotunity to move.<br>
 
-  How does visual cursor move in the browser element? There is an accessibility tree for every browser element, it is a subtree of DOM tree. And there is also a virtual cursor with nsIAccessiblePovit type for an accessibility tree which indicates currently focused element in the accessibility tree. When browser element receives the action command, it can get access to the virtual cursor via ContentControl.jsm, and make the virtual cursor to traverse accessibility tree according the action command. If virtual cursor can move, it will send an AccEvent through EventManager.jsm to AccessFu.jsm to notice the focused element changed.
+  How does visual cursor move in the browser element? As we previously mention, there is an accessibility tree for every browser element. When browser element receives the action command, it can get access to the virtual cursor via ContentControl.jsm, and make the virtual cursor to traverse accessibility tree according the action command. If virtual cursor can move, it will send an AccEvent through EventManager.jsm to AccessFu.jsm to notice the focused element changed.
   ![Code flow](./img/codeFlow.png)<br>
 
 
