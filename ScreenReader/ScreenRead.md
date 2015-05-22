@@ -9,23 +9,29 @@
 ##Introduction
 ###What is screen reader
 **Web Accessibility Initiative-Accessible Reich Internet Application(WAI-ARIA)** is a w3c recommendation that can gain 
-the accessibility to the disabilities. And screen reader is a text-to-voice software accessibility tool for mozilla.<br/><br/>
-Screen reader is a feature of accessibility system. After enabling it, a pivot, called visual cursor, will be shown on the screen indicate the current element system points to. User can then use some inputs like gesture or keyboard to control the viusal cursor traverses through the elements on the screen(the accessibility tree) and the system will also read the content where visual cursor at to show what the current element is.
+the accessibility to the disabilities. Screen reader is a text-to-voice software accessibility tool for mozilla.<br/><br/>
+Screen reader is a feature of accessibility system. After enabling it, a pointer, called visual cursor, will show on the screen which indicates the current element system points to. User can then use some inputs like gesture or keyboard to control the viusal cursor traverses through the elements on the screen and the system will read the content of the element where the visual cursor point to.
+With this system visual disable people can traverse the element on the screen without knowing element's relative position.
 ###How to enable screen reader on B2G?
 
 Open "Settings" >> choose "Developers" >> check "Show screen reader settings" under "debug"<br/>
 Back to "Settings" mune >> choose "Accessibility" >> Open "Screen Reader"
 
 ##Screen Reader Architecture
-  There are two parts of screen reader, the first part is AccessFu.jsm which is imported by shell.html. It will listen to mozBroser-opened message and load content-script.js into the browser elements when are opened. In the other hands, it is also in charge of handling the guesture, drawing highlight box and trigger the TTS(text-to-speech) engine. The other part is for the browser element which contains content-script.js, ContentControl.jsm and EventManager.jsm, the detail of these file will be mentioned after. Every browser element has an accessibility tree and an accessible pivot, the tree is a subtree of a DOM tree and the pivot will traverse in the tree to indicate the current focused element in screen reader.<br>
-###Move the cursor
-The following is the flow when an user action occur, this action can be input like gesture, mouse scroll, key event:<br/><br/>
-  ![Code flow](./img/codeFlow.png)<br/>
-  Most of user actions like gesture and frame load will start from AccessFu.jsm. It will send the action message to the target browser element. And ContentControl.jsm will access the accessibility tree via nsAccessiblePivot which will send an AccEvent for pivot updating to EventManager.jsm. At last EventManager.jsm will wrap the update information and send it back to AccessFu.jsm for TTS and highlightbox updating.<br>
-###Out-of-Process movement
-  When cursor move across browser element, it will connect with the other browser element with frame message manager. ContentControl.jsm will manager this part. The following figure demostrate the flow:<br>
-  ![Code flow2](./img/codeFlow2.png)<br>
-  When ContentControl.jsm first receive action message from its parent Browser element, it will check if the current accessible element its pivot points to embeds another Browser element, if so pass it recursively to the deepest child. Then check the accessiblility tree like previous mentioned if it is moveable. If it is moveable, still, check if the pointing element a Browser element, if so do the check we previously did. if it is not movable, pass it back to the parent and check it is moveable like previous check, if it can move clear the previous cursor.
+  There are two parts of screen reader, the first part is AccessFu.jsm which is imported by shell.html. It will listen to mozBroser-opened message and load content-script.js into the browser elements when they are opened. In the other hands, it is also in charge of handling the guesture and parts of keyboard input, drawing visual cursor and trigger the TTS(text-to-speech) engine. The other part is for the browser element which contains content-script.js, ContentControl.jsm and EventManager.jsm, the detail of these file will be mentioned in later paragraph. Every browser elements has an accessibility tree and an accessible pivot, the tree is a subtree of a DOM tree and the pivot will traverse in the tree to indicate the current focused element in screen reader.<br>
+
+###Move the visual cursor
+There are two main steps to move the visual cursor. When receiving an action command, a browser element will traverse its own elements (intra-browser) or pass the movement action to other browser elements (inter-browse).<br>
+
+The following is the flow of screen reader execute an action command:
+![Code flow2](./img/codeFlow2.png)<br>
+  When browser receives an action command, it will check if the current pointing element is a browser element, if so, passes the comment to it via frame message manager so the screan reader can reach elements across browser elements.
+  After the browser element checking, the browser element will try to move visual cursor inside itself; If it do can move, the browser element will move the visual cursor and do the browser element mentioned above again, if not, it will pass the command back to its parent to seek the oppotunity to move.<br>
+
+  How does visual cursor move in the browser element? There is an accessibility tree for every browser element, it is a subtree of DOM tree. And there is also a virtual cursor with nsIAccessiblePovit type for an accessibility tree which indicates currently focused element in the accessibility tree. When browser element receives the action command, it can get access to the virtual cursor via ContentControl.jsm, and make the virtual cursor to traverse accessibility tree according the action command. If virtual cursor can move, it will send an AccEvent through EventManager.jsm to AccessFu.jsm to notice the focused element changed.
+  ![Code flow](./img/codeFlow.png)<br>
+
+
 
 ###Core Modules and Components
 ####AccessFu.jsm
